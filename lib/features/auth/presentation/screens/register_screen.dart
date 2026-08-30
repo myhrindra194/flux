@@ -1,0 +1,158 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../providers/auth_notifier.dart';
+
+class RegisterScreen extends ConsumerStatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    await ref
+        .read(authNotifierProvider.notifier)
+        .register(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authNotifierProvider);
+
+    ref.listen(authNotifierProvider, (previous, next) {
+      if (next.isAuthenticated && context.mounted) {
+        context.go('/home');
+      }
+
+      if (next.errorMessage != null &&
+          next.errorMessage != previous?.errorMessage) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Créer un compte')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Créer ton compte',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 32),
+
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Veuillez entrer votre email';
+                  }
+
+                  if (!value.contains('@')) {
+                    return 'Email invalide';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Mot de passe',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.length < 6) {
+                    return 'Minimum 6 caractères';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirmer le mot de passe',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value != _passwordController.text) {
+                    return 'Les mots de passe ne correspondent pas';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: authState.isLoading ? null : _register,
+                  child: authState.isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Créer mon compte'),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              TextButton(
+                onPressed: () {
+                  context.go('/login');
+                },
+                child: const Text('Déjà un compte ? Se connecter'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
