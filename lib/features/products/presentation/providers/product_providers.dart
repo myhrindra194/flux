@@ -1,3 +1,4 @@
+import 'package:api/features/products/data/datasources/product_local_datasource.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -16,9 +17,11 @@ final productRemoteDataSourceProvider = Provider<ProductRemoteDataSource>((
 });
 
 final productRepositoryProvider = Provider<ProductRepository>((ref) {
-  final dataSource = ref.watch(productRemoteDataSourceProvider);
+  final remoteDataSource = ref.watch(productRemoteDataSourceProvider);
 
-  return ProductRepositoryImpl(dataSource);
+  final localDataSource = ProductLocalDataSource();
+
+  return ProductRepositoryImpl(remoteDataSource, localDataSource);
 });
 
 final productsProvider = FutureProvider<List<ProductEntity>>((ref) async {
