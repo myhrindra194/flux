@@ -19,15 +19,13 @@ Future<void> main() async {
   runApp(const ProviderScope(child: FLXApp()));
 }
 
-class FLXApp extends StatelessWidget {
+class FLXApp extends ConsumerWidget {
   const FLXApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'FLUX',
-      debugShowCheckedModeBanner: false,
-      routerConfig: appRouter,
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+
+    return MaterialApp.router(title: 'FLX', routerConfig: router);
   }
 }

@@ -1,4 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'auth_interceptor.dart';
 
 class DioClient {
   static const String baseUrl = 'https://dummyjson.com';
@@ -6,6 +9,8 @@ class DioClient {
   late final Dio dio;
 
   DioClient() {
+    final supabase = Supabase.instance.client;
+
     dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
@@ -14,5 +19,7 @@ class DioClient {
         headers: {'Content-Type': 'application/json'},
       ),
     );
+
+    dio.interceptors.add(AuthInterceptor(supabase));
   }
 }
