@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/errors/exceptions.dart';
+
 class AuthRemoteDataSource {
   final SupabaseClient _client;
 
@@ -9,37 +11,65 @@ class AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
-    final response = await _client.auth.signUp(
-      email: email,
-      password: password,
-    );
+    try {
+      final response = await _client.auth.signUp(
+        email: email,
+        password: password,
+      );
 
-    final user = response.user;
+      final user = response.user;
 
-    if (user == null) {
-      throw Exception('Registration failed');
+      if (user == null) {
+        throw const ServerException('Impossible de créer le compte.');
+      }
+
+      return user;
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } on AppException {
+      rethrow;
+    } catch (_) {
+      throw const UnknownException();
     }
-
-    return user;
   }
 
   Future<User> login({required String email, required String password}) async {
-    final response = await _client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final response = await _client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
-    final user = response.user;
+      final user = response.user;
 
-    if (user == null) {
-      throw Exception('Login failed');
+      if (user == null) {
+        throw const ServerException('Impossible de se connecter.');
+      }
+
+      return user;
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
+    } on PostgrestException catch (e) {
+      throw ServerException(e.message);
+    } on AppException {
+      rethrow;
+    } catch (_) {
+      throw const UnknownException();
     }
-
-    return user;
   }
 
   Future<void> logout() async {
-    await _client.auth.signOut();
+    try {
+      await _client.auth.signOut();
+    } on AuthException catch (e) {
+      throw ServerException(e.message);
+    } on AppException {
+      rethrow;
+    } catch (_) {
+      throw const UnknownException();
+    }
   }
 
   User? getCurrentUser() {

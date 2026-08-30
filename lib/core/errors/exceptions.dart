@@ -15,3 +15,9 @@ class ServerException extends AppException {
 class CacheException extends AppException {
   const CacheException([super.message = 'Erreur du cache local.']);
 }
+
+class UnknownException extends AppException {
+  const UnknownException([
+    super.message = 'Une erreur inattendue est survenue.',
+  ]);
+}

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../auth/auth_session_manager.dart';
 import 'auth_interceptor.dart';
 
 class DioClient {
@@ -20,6 +21,12 @@ class DioClient {
       ),
     );
 
-    dio.interceptors.add(AuthInterceptor(supabase));
+    final sessionManager = AuthSessionManager(supabase);
+
+    final authInterceptor = AuthInterceptor(sessionManager);
+
+    authInterceptor.setDio(dio);
+
+    dio.interceptors.add(authInterceptor);
   }
 }
