@@ -1,9 +1,11 @@
+import 'package:api/core/errors/result.dart';
+
 import '../entities/product_entity.dart';
 
 abstract class ProductRepository {
-  Future<List<ProductEntity>> getProducts();
+  Future<Result<List<ProductEntity>>> getProducts();
 
-  Future<ProductEntity> getProductById(int id);
+  Future<Result<ProductEntity>> getProductById(int id);
 
-  Future<List<ProductEntity>> searchProducts(String query);
+  Future<Result<List<ProductEntity>>> searchProducts(String query);
 }

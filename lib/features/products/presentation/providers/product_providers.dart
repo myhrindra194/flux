@@ -1,4 +1,6 @@
+import 'package:api/core/errors/result.dart';
 import 'package:api/features/products/data/datasources/product_local_datasource.dart';
+import 'package:api/features/products/presentation/providers/product_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -24,12 +26,21 @@ final productRepositoryProvider = Provider<ProductRepository>((ref) {
   return ProductRepositoryImpl(remoteDataSource, localDataSource);
 });
 
-final productsProvider = FutureProvider<List<ProductEntity>>((ref) async {
+final productsProvider = FutureProvider<ProductsState>((ref) async {
   final repository = ref.watch(productRepositoryProvider);
 
-  return repository.getProducts();
+  final result = await repository.getProducts();
+
+  return switch (result) {
+    Success(data: final products, isFromCache: final isFromCache) =>
+      ProductsState(products: products, isFromCache: isFromCache),
+
+    Error(failure: final failure) => throw failure,
+  };
 });
+
 final productSearchQueryProvider = StateProvider<String>((ref) => '');
+
 final productSearchProvider = FutureProvider<List<ProductEntity>>((ref) async {
   final query = ref.watch(productSearchQueryProvider);
 
@@ -39,14 +50,27 @@ final productSearchProvider = FutureProvider<List<ProductEntity>>((ref) async {
 
   final repository = ref.watch(productRepositoryProvider);
 
-  return repository.searchProducts(query);
+  final result = await repository.searchProducts(query);
+
+  return switch (result) {
+    Success(data: final products) => products,
+
+    Error(failure: final failure) => throw failure,
+  };
 });
 
-final productDetailProvider = FutureProvider.family<ProductEntity, int>((
+final productDetailProvider = FutureProvider.family<ProductDetailState, int>((
   ref,
   id,
 ) async {
   final repository = ref.watch(productRepositoryProvider);
 
-  return repository.getProductById(id);
+  final result = await repository.getProductById(id);
+
+  return switch (result) {
+    Success(data: final product, isFromCache: final isFromCache) =>
+      ProductDetailState(product: product, isFromCache: isFromCache),
+
+    Error(failure: final failure) => throw failure,
+  };
 });
