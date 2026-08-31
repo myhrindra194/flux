@@ -1,8 +1,11 @@
+import 'package:api/core/errors/exceptions.dart';
+import 'package:api/core/errors/failures.dart';
+import 'package:api/core/errors/result.dart';
 import 'package:api/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:api/features/auth/data/models/user_model.dart';
 
-import '../../domain/entities/user_entity.dart';
-import '../../domain/repositories/auth_repository.dart';
+import '../entities/user_entity.dart';
+import 'auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
@@ -10,34 +13,72 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._remoteDataSource);
 
   @override
-  Future<UserEntity> register({
+  Future<Result<UserEntity>> register({
     required String email,
     required String password,
   }) async {
-    final user = await _remoteDataSource.register(
-      email: email,
-      password: password,
-    );
+    try {
+      final user = await _remoteDataSource.register(
+        email: email,
+        password: password,
+      );
 
-    return UserModel.fromSupabaseUser(user);
+      return Success(UserModel.fromSupabaseUser(user));
+    } on NetworkException catch (e) {
+      return Error(NetworkFailure(e.message));
+    } on ServerException catch (e) {
+      return Error(ServerFailure(e.message));
+    } on CacheException catch (e) {
+      return Error(CacheFailure(e.message));
+    } on UnknownException catch (e) {
+      return Error(UnknownFailure(e.message));
+    } catch (_) {
+      return const Error(UnknownFailure());
+    }
   }
 
   @override
-  Future<UserEntity> login({
+  Future<Result<UserEntity>> login({
     required String email,
     required String password,
   }) async {
-    final user = await _remoteDataSource.login(
-      email: email,
-      password: password,
-    );
+    try {
+      final user = await _remoteDataSource.login(
+        email: email,
+        password: password,
+      );
 
-    return UserModel.fromSupabaseUser(user);
+      return Success(UserModel.fromSupabaseUser(user));
+    } on NetworkException catch (e) {
+      return Error(NetworkFailure(e.message));
+    } on ServerException catch (e) {
+      return Error(ServerFailure(e.message));
+    } on CacheException catch (e) {
+      return Error(CacheFailure(e.message));
+    } on UnknownException catch (e) {
+      return Error(UnknownFailure(e.message));
+    } catch (_) {
+      return const Error(UnknownFailure());
+    }
   }
 
   @override
-  Future<void> logout() {
-    return _remoteDataSource.logout();
+  Future<Result<void>> logout() async {
+    try {
+      await _remoteDataSource.logout();
+
+      return const Success(null);
+    } on NetworkException catch (e) {
+      return Error(NetworkFailure(e.message));
+    } on ServerException catch (e) {
+      return Error(ServerFailure(e.message));
+    } on CacheException catch (e) {
+      return Error(CacheFailure(e.message));
+    } on UnknownException catch (e) {
+      return Error(UnknownFailure(e.message));
+    } catch (_) {
+      return const Error(UnknownFailure());
+    }
   }
 
   @override

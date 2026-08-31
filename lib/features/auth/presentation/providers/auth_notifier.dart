@@ -1,3 +1,4 @@
+import 'package:api/core/errors/result.dart';
 import 'package:api/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,36 +27,42 @@ class AuthNotifier extends Notifier<AuthState> {
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
-    try {
-      final user = await _repository.register(email: email, password: password);
+    final result = await _repository.register(email: email, password: password);
 
-      state = AuthState(user: user);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    switch (result) {
+      case Success(data: final user):
+        state = AuthState(user: user);
+
+      case Error(failure: final failure):
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
     }
   }
 
   Future<void> login({required String email, required String password}) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
-    try {
-      final user = await _repository.login(email: email, password: password);
+    final result = await _repository.login(email: email, password: password);
 
-      state = AuthState(user: user);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    switch (result) {
+      case Success(data: final user):
+        state = AuthState(user: user);
+
+      case Error(failure: final failure):
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
     }
   }
 
   Future<void> logout() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
 
-    try {
-      await _repository.logout();
+    final result = await _repository.logout();
 
-      state = const AuthState();
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    switch (result) {
+      case Success():
+        state = const AuthState();
+
+      case Error(failure: final failure):
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
     }
   }
 }

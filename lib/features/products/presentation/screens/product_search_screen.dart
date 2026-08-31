@@ -14,7 +14,7 @@ class ProductSearchScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
-  final TextEditingController _controller = TextEditingController();
+  final _controller = TextEditingController();
 
   @override
   void dispose() {
@@ -32,20 +32,40 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
     ref.read(productSearchQueryProvider.notifier).state = query;
   }
 
+  IconData _getErrorIcon(Object error) {
+    if (error is NetworkFailure) {
+      return Icons.wifi_off;
+    }
+
+    if (error is ServerFailure) {
+      return Icons.cloud_off;
+    }
+
+    if (error is CacheFailure) {
+      return Icons.storage;
+    }
+
+    return Icons.error_outline;
+  }
+
+  String _getErrorMessage(Object error) {
+    if (error is Failure) {
+      return error.message;
+    }
+
+    return 'Une erreur inattendue est survenue.';
+  }
+
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(productSearchProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Rechercher')),
-
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // =========================
-            // SEARCH FIELD
-            // =========================
             TextField(
               controller: _controller,
               textInputAction: TextInputAction.search,
@@ -63,9 +83,6 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
 
             const SizedBox(height: 16),
 
-            // =========================
-            // RESULTS
-            // =========================
             Expanded(
               child: productsAsync.when(
                 // =========================
@@ -79,17 +96,8 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                 // ERROR
                 // =========================
                 error: (error, stackTrace) {
-                  final message = error is Failure
-                      ? error.message
-                      : 'Une erreur inattendue est survenue.';
-
-                  final icon = error is NetworkFailure
-                      ? Icons.wifi_off
-                      : error is ServerFailure
-                      ? Icons.cloud_off
-                      : error is CacheFailure
-                      ? Icons.storage
-                      : Icons.error_outline;
+                  final message = _getErrorMessage(error);
+                  final icon = _getErrorIcon(error);
 
                   return Center(
                     child: Padding(
@@ -122,7 +130,12 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                 // =========================
                 data: (products) {
                   if (products.isEmpty) {
-                    return const Center(child: Text('Aucun produit trouvé.'));
+                    return const Center(
+                      child: Text(
+                        'Aucun produit trouvé.',
+                        textAlign: TextAlign.center,
+                      ),
+                    );
                   }
 
                   return ListView.builder(
@@ -131,10 +144,12 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                       final product = products[index];
 
                       return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
+                        margin: const EdgeInsets.only(bottom: 12),
                         child: ListTile(
+                          onTap: () {
+                            context.push('/products/${product.id}');
+                          },
                           contentPadding: const EdgeInsets.all(12),
-
                           leading: Image.network(
                             product.thumbnail,
                             width: 60,
@@ -144,23 +159,20 @@ class _ProductSearchScreenState extends ConsumerState<ProductSearchScreen> {
                               return const Icon(Icons.image_not_supported);
                             },
                           ),
-
                           title: Text(
                             product.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-
                           subtitle: Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
                               '${product.price.toStringAsFixed(2)} \$',
                             ),
                           ),
-
-                          onTap: () {
-                            context.push('/products/${product.id}');
-                          },
+                          trailing: Text(
+                            '⭐ ${product.rating.toStringAsFixed(1)}',
+                          ),
                         ),
                       );
                     },

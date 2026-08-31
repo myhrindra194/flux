@@ -1,14 +1,18 @@
-import 'package:api/features/auth/domain/entities/user_entity.dart';
+import '../../../../core/errors/result.dart';
+import '../entities/user_entity.dart';
 
 abstract class AuthRepository {
-  Future<UserEntity> register({
+  Future<Result<UserEntity>> register({
     required String email,
     required String password,
   });
 
-  Future<UserEntity> login({required String email, required String password});
+  Future<Result<UserEntity>> login({
+    required String email,
+    required String password,
+  });
 
-  Future<void> logout();
+  Future<Result<void>> logout();
 
   UserEntity? getCurrentUser();
 }
